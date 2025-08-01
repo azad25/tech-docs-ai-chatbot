@@ -1,0 +1,166 @@
+services:
+  app:
+    build: .
+    environment:
+      # Add environment variables for Ollama configuration
+      - OLLAMA_API_URL=http://ollama:11434
+      - OLLAMA_MODEL=nomic-embed-text # Model for embeddings
+      - OLLAMA_CHAT_MODEL=tinyllama # Model for chat completions
+      # Database configuration
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=tech-docs-ai-chat
+      # Vector database configuration
+      - QDRANT_API_URL=http://qdrant:6333
+      - QDRANT_COLLECTION=tech_docs_knowledge
+      # Kafka configuration
+      - KAFKA_URL=kafka:9092
+      # Redis configuration
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - postgres
+      - mongo
+      - redis
+      - qdrant
+      - ollama
+      - kafka
+    networks:
+      - tech-docs-ai-chat-network
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: ["./worker"]
+    environment:
+      # Add environment variables for Ollama configuration
+      - OLLAMA_API_URL=http://ollama:11434
+      - OLLAMA_MODEL=nomic-embed-text # Model for embeddings
+      - OLLAMA_CHAT_MODEL=tinyllama # Model for chat completions
+      # Database configuration
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=tech-docs-ai-chat
+      # Vector database configuration
+      - QDRANT_API_URL=http://qdrant:6333
+      - QDRANT_COLLECTION=tech_docs_knowledge
+      # Kafka configuration
+      - KAFKA_URL=kafka:9092
+      # Redis configuration
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - qdrant
+      - ollama
+      - kafka
+      - redis
+    networks:
+      - tech-docs-ai-chat-network
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - app
+    networks:
+      - tech-docs-ai-chat-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=tech-docs-ai-chat
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tech-docs-ai-chat-network
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:latest
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - tech-docs-ai-chat-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - tech-docs-ai-chat-network
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - tech-docs-ai-chat-network
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - tech-docs-ai-chat-network
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    depends_on:
+      - zookeeper
+    networks:
+      - tech-docs-ai-chat-network
+    restart: unless-stopped
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - tech-docs-ai-chat-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
+  qdrant_data:
+  ollama_data:
+
+networks:
+  tech-docs-ai-chat-network:
+    driver: bridge

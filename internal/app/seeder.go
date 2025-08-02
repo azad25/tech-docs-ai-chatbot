@@ -1,16 +1,19 @@
 package app
 
-import "log"
+import (
+	"log"
+)
 
-// Seeder initializes the system with default data.
+// Seeder initializes the database with sample data if needed
 func Seeder() {
-	log.Println("Running Seeder...")
-
-	// Example: Seed default data into the database
-	log.Println("Seeding default data...")
-
-	// Add your seeding logic here
-	// Example: Create default users, roles, etc.
-
-	log.Println("Seeder completed.")
+	log.Println("Running database seeder...")
+	
+	// For now, this is a placeholder
+	// In the future, you could add sample documents, categories, etc.
+	// Example:
+	// - Create default categories
+	// - Add sample documentation
+	// - Initialize system settings
+	
+	log.Println("Database seeder completed")
 }

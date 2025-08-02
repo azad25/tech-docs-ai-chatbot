@@ -3,107 +3,50 @@ package app
 import (
 	"log"
 	"net/http"
-	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
 // WebSocketHandler handles WebSocket connections for real-time chat
 type WebSocketHandler struct {
-	service  *Service
+	service  ServiceInterface
 	upgrader websocket.Upgrader
-	clients  map[*websocket.Conn]bool
-	mutex    sync.RWMutex
-	allowedOrigins []string
 }
 
 // NewWebSocketHandler creates a new WebSocket handler
-func NewWebSocketHandler(svc *Service) *WebSocketHandler {
+func NewWebSocketHandler(service ServiceInterface) *WebSocketHandler {
 	return &WebSocketHandler{
-		service: svc,
+		service: service,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
-				origin := r.Header.Get("Origin")
-				// In production, this should be configured via environment variables
-				allowedOrigins := []string{"http://localhost:3000", "http://localhost:8080"}
-				for _, allowed := range allowedOrigins {
-					if origin == allowed {
-						return true
-					}
-				}
-				log.Printf("Rejected WebSocket connection from origin: %s", origin)
-				return false
+				// Allow connections from any origin in development
+				// In production, you should validate the origin
+				return true
 			},
-			ReadBufferSize:  1024,
-			WriteBufferSize: 1024,
-			HandshakeTimeout: 10 * time.Second,
 		},
-		clients: make(map[*websocket.Conn]bool),
 	}
 }
 
-// WebSocketMessage represents a WebSocket message
+// WebSocketMessage represents a message sent over WebSocket
 type WebSocketMessage struct {
-	Type      string `json:"type"` // "chat", "typing", "status"
-	Message   string `json:"message"`
+	Type      string `json:"type"`
 	SessionID string `json:"session_id,omitempty"`
-	UserType  string `json:"user_type,omitempty"`
-}
-
-// WebSocketResponse represents a WebSocket response
-type WebSocketResponse struct {
-	Type      string `json:"type"` // "chat_response", "status", "error"
-	Message   string `json:"message"`
-	SessionID string `json:"session_id,omitempty"`
+	Message   string `json:"message,omitempty"`
+	Response  string `json:"response,omitempty"`
 	Error     string `json:"error,omitempty"`
 }
 
 // HandleWebSocket handles WebSocket connections
 func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
-	// Set read/write deadlines
 	conn, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("Failed to upgrade connection to WebSocket: %v", err)
+		log.Printf("WebSocket upgrade failed: %v", err)
 		return
 	}
 	defer conn.Close()
 
-	// Set read/write limits and deadlines
-	conn.SetReadLimit(4096) // 4KB message size limit
-	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-	conn.SetPongHandler(func(string) error {
-		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-		return nil
-	})
+	log.Println("WebSocket connection established")
 
-	// Add client to the list with mutex protection
-	h.mutex.Lock()
-	h.clients[conn] = true
-	h.mutex.Unlock()
-
-	// Start ping-pong routine
-	go func() {
-		ticker := time.NewTicker(54 * time.Second)
-		defer ticker.Stop()
-
-		for {
-			<-ticker.C
-			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				return
-			}
-		}
-	}()
-
-	// Send welcome message
-	welcomeMsg := WebSocketResponse{
-		Type:    "status",
-		Message: "Connected to Tech Docs AI WebSocket",
-	}
-	conn.WriteJSON(welcomeMsg)
-
-	log.Printf("WebSocket client connected: %s", conn.RemoteAddr())
-
-	// Handle incoming messages
 	for {
 		var msg WebSocketMessage
 		err := conn.ReadJSON(&msg)
@@ -112,116 +55,73 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 			break
 		}
 
-		// Validate message size
-		if len(msg.Message) > 2000 { // 2KB message limit
-			response := WebSocketResponse{
-				Type:  "error",
-				Error: "Message too large",
-			}
-			conn.WriteJSON(response)
-			continue
-		}
-
-		// Handle different message types
 		switch msg.Type {
 		case "chat":
-			h.handleChatMessage(conn, msg)
-		case "typing":
-			h.handleTypingMessage(conn, msg)
-		default:
-			// Send error response for unknown message type
-			response := WebSocketResponse{
-				Type:  "error",
-				Error: "Unknown message type: " + msg.Type,
+			// Send typing indicator
+			h.sendTypingIndicator(conn)
+			
+			response, err := h.service.Chat(msg.Message)
+			if err != nil {
+				h.sendError(conn, "Failed to process chat message", err)
+				continue
 			}
-			conn.WriteJSON(response)
+			h.sendResponse(conn, "chat_response", response)
+
+		case "chat_with_history":
+			if msg.SessionID == "" {
+				h.sendError(conn, "Session ID is required for chat with history", nil)
+				continue
+			}
+			
+			// Send typing indicator
+			h.sendTypingIndicator(conn)
+			
+			response, err := h.service.ChatWithHistory(msg.SessionID, msg.Message)
+			if err != nil {
+				h.sendError(conn, "Failed to process chat with history", err)
+				continue
+			}
+			h.sendResponse(conn, "chat_response", response)
+
+		default:
+			h.sendError(conn, "Unknown message type", nil)
 		}
 	}
-
-	// Remove client from the list
-	h.mutex.Lock()
-	delete(h.clients, conn)
-	h.mutex.Unlock()
-
-	log.Printf("WebSocket client disconnected: %s", conn.RemoteAddr())
 }
 
-// handleChatMessage processes chat messages and sends responses
-func (h *WebSocketHandler) handleChatMessage(conn *websocket.Conn, msg WebSocketMessage) {
-	if msg.Message == "" {
-		response := WebSocketResponse{
-			Type:  "error",
-			Error: "Empty message",
-		}
-		conn.WriteJSON(response)
-		return
+// sendResponse sends a successful response over WebSocket
+func (h *WebSocketHandler) sendResponse(conn *websocket.Conn, msgType, response string) {
+	msg := WebSocketMessage{
+		Type:     msgType,
+		Response: response,
 	}
-
-	// Send typing indicator
-	typingResponse := WebSocketResponse{
-		Type:    "typing",
-		Message: "AI is thinking...",
+	if err := conn.WriteJSON(msg); err != nil {
+		log.Printf("WebSocket write error: %v", err)
 	}
-	conn.WriteJSON(typingResponse)
+}
 
-	// Get response from service
-	var response string
-	var err error
-
-	if msg.SessionID != "" {
-		// Use chat with history
-		response, err = h.service.ChatWithHistory(msg.SessionID, msg.Message)
-	} else {
-		// Use regular chat
-		response, err = h.service.Chat(msg.Message)
-	}
-
+// sendError sends an error response over WebSocket
+func (h *WebSocketHandler) sendError(conn *websocket.Conn, message string, err error) {
+	errorMsg := message
 	if err != nil {
-		errorResponse := WebSocketResponse{
-			Type:  "error",
-			Error: "Failed to get response: " + err.Error(),
-		}
-		conn.WriteJSON(errorResponse)
-		return
+		errorMsg += ": " + err.Error()
 	}
 
-	// Send the response
-	chatResponse := WebSocketResponse{
-		Type:      "chat_response",
-		Message:   response,
-		SessionID: msg.SessionID,
+	msg := WebSocketMessage{
+		Type:  "error",
+		Error: errorMsg,
 	}
-	conn.WriteJSON(chatResponse)
-}
-
-// handleTypingMessage handles typing indicators
-func (h *WebSocketHandler) handleTypingMessage(conn *websocket.Conn, msg WebSocketMessage) {
-	// Broadcast typing indicator to other clients (if needed)
-	// For now, just acknowledge
-	response := WebSocketResponse{
-		Type: "typing_ack",
-	}
-	conn.WriteJSON(response)
-}
-
-// Broadcast sends a message to all connected clients
-func (h *WebSocketHandler) Broadcast(msg WebSocketResponse) {
-	h.mutex.RLock()
-	defer h.mutex.RUnlock()
-
-	for client := range h.clients {
-		err := client.WriteJSON(msg)
-		if err != nil {
-			log.Printf("Failed to send message to client: %v", err)
-			client.Close()
-			delete(h.clients, client)
-		}
+	if writeErr := conn.WriteJSON(msg); writeErr != nil {
+		log.Printf("WebSocket write error: %v", writeErr)
 	}
 }
 
-// GetConnectedClientsCount returns the number of connected clients
-func (h *WebSocketHandler) GetConnectedClientsCount() int {
-	h.mutex.RLock()
-	defer h.mutex.RUnlock()
-	return len(h.clients)
+// sendTypingIndicator sends a typing indicator over WebSocket
+func (h *WebSocketHandler) sendTypingIndicator(conn *websocket.Conn) {
+	msg := WebSocketMessage{
+		Type: "typing",
+	}
+	if err := conn.WriteJSON(msg); err != nil {
+		log.Printf("WebSocket write error: %v", err)
+	}
 }

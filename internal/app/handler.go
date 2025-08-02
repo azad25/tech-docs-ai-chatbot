@@ -3,20 +3,36 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 
 	"tech-docs-ai/internal/types"
 )
 
+// ServiceInterface defines the interface that Service implements
+type ServiceInterface interface {
+	Chat(message string) (string, error)
+	ChatWithHistory(sessionID, message string) (string, error)
+	GetChatHistory(sessionID string, limit int) ([]*types.ChatMessage, error)
+	AddDocument(doc *types.Document) error
+	SearchDocuments(query string, limit int) ([]*types.Document, error)
+	ScrapeDocument(url, category string, tags []string) error
+	GenerateTutorialFromScrapedData(url, topic string) (string, error)
+	ScrapeAndGenerateTutorial(url, topic string) (string, error)
+	GetConversationInsights(sessionID string) (map[string]interface{}, error)
+}
+
 // Handler handles HTTP requests for the application.
 type Handler struct {
-	service *Service
+	service ServiceInterface
 }
 
 // NewHandler creates a new Handler with the given service.
-func NewHandler(svc *Service) *Handler {
+func NewHandler(svc ServiceInterface) *Handler {
 	return &Handler{service: svc}
 }
 
@@ -63,6 +79,12 @@ type scrapeTutorialRequest struct {
 type chatWithHistoryRequest struct {
 	SessionID string `json:"session_id"`
 	Message   string `json:"message"`
+}
+
+// ErrorResponse represents a standardized error response
+type ErrorResponse struct {
+	Error string `json:"error"`
+	Code  string `json:"code"`
 }
 
 // Error codes for API responses

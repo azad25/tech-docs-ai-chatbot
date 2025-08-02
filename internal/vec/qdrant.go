@@ -56,9 +56,8 @@ func (c *QdrantClient) ensureCollection() error {
 
 	// If collection doesn't exist, create it
 	if resp.StatusCode == http.StatusNotFound {
-		createURL := fmt.Sprintf("%s/collections", c.apiURL)
+		createURL := fmt.Sprintf("%s/collections/%s", c.apiURL, c.collection)
 		createBody := map[string]interface{}{
-			"name": c.collection,
 			"vectors": map[string]interface{}{
 				"size":     768, // Default size for nomic-embed-text
 				"distance": "Cosine",
@@ -96,8 +95,8 @@ func (c *QdrantClient) StoreVector(vector []float32, metadata map[string]interfa
 		return fmt.Errorf("empty vector")
 	}
 
-	// Generate a unique ID for the vector
-	vectorID := fmt.Sprintf("vec_%d", time.Now().UnixNano())
+	// Generate a unique numeric ID for the vector
+	vectorID := time.Now().UnixNano()
 
 	// Prepare the upsert request
 	upsertBody := map[string]interface{}{

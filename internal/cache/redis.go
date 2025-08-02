@@ -92,12 +92,9 @@ func (c *RedisCache) validateKey(key string) error {
 
 // validateValue checks if the value size is within limits
 
-
 // setWithValidation sets a value in Redis with size validation
 
-
 // getWithValidation gets a value from Redis with error handling
-
 
 // Cache keys
 const (
@@ -183,8 +180,6 @@ func (c *RedisCache) getWithValidation(ctx context.Context, key string, value in
 
 	return nil
 }
-
-
 
 // DocumentCache interface for caching documents
 type DocumentCache interface {
@@ -288,7 +283,7 @@ func (c *redisEmbeddingCache) Get(ctx context.Context, text string) ([]float32, 
 	data, err := c.cache.client.Get(ctx, key).Bytes()
 	if err != nil {
 		if err == redis.Nil {
-			return nil, nil // Cache miss
+			return nil, fmt.Errorf("cache miss") // Return error for cache miss
 		}
 		return nil, fmt.Errorf("failed to get embedding from cache: %w", err)
 	}

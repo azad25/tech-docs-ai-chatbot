@@ -13,11 +13,8 @@ RUN npm install
 # Copy all files
 COPY . .
 
-# Build the Next.js app
-RUN npm run build
-
 # Expose port 3000
 EXPOSE 3000
 
-# Start the Next.js server
-CMD ["npm", "start"]
+# Start the Vite development server
+CMD ["npm", "run", "dev"]

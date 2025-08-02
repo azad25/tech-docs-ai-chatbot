@@ -9,12 +9,12 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-// Producer is a Kafka producer implementation.
+// Producer is a Kafka producer for sending messages
 type Producer struct {
 	writer *kafka.Writer
 }
 
-// NewProducer creates a new Kafka producer.
+// NewProducer creates a new Kafka producer
 func NewProducer() *Producer {
 	kafkaURL := os.Getenv("KAFKA_URL")
 	if kafkaURL == "" {
@@ -23,9 +23,9 @@ func NewProducer() *Producer {
 
 	writer := &kafka.Writer{
 		Addr:         kafka.TCP(kafkaURL),
-		Topic:        "", // Will be set per message
+		Balancer:     &kafka.LeastBytes{},
 		BatchTimeout: 10 * time.Millisecond,
-		RequiredAcks: kafka.RequireOne,
+		BatchSize:    100,
 	}
 
 	return &Producer{
@@ -33,25 +33,24 @@ func NewProducer() *Producer {
 	}
 }
 
-// SendMessage sends a message to a Kafka topic.
+// SendMessage sends a message to the specified Kafka topic
 func (p *Producer) SendMessage(topic string, message []byte) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	p.writer.Topic = topic
 	err := p.writer.WriteMessages(ctx, kafka.Message{
-		Key:   []byte(fmt.Sprintf("msg_%d", time.Now().UnixNano())),
+		Topic: topic,
 		Value: message,
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed to send message to Kafka: %w", err)
+		return fmt.Errorf("failed to send message to topic %s: %w", topic, err)
 	}
 
 	return nil
 }
 
-// Close closes the Kafka producer.
+// Close closes the Kafka producer
 func (p *Producer) Close() error {
 	return p.writer.Close()
 }

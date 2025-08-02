@@ -13,6 +13,7 @@ require (
 	github.com/redis/go-redis/v9 v9.11.0
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/testify v1.8.0
+	golang.org/x/time v0.8.0
 )
 
 require (

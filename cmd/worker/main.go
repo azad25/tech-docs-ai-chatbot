@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"tech-docs-ai/internal/emb"
+	"tech-docs-ai/internal/kafka"
 	"tech-docs-ai/internal/repo"
 	"tech-docs-ai/internal/vec"
 )
@@ -26,9 +27,9 @@ func main() {
 	}
 	defer postgresStore.Close()
 
-	// Create a simple worker that processes scraping jobs
-	// Note: We'll use concrete types instead of interfaces for now
-	worker := NewScrapingWorker(ollamaClient, qdrantClient, postgresStore)
+	// Create Kafka consumer for processing scraping jobs
+	consumer := kafka.NewConsumer(postgresStore, ollamaClient, qdrantClient)
+	defer consumer.Close()
 
 	// Set up graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())
@@ -44,35 +45,8 @@ func main() {
 		cancel()
 	}()
 
-	// Start the worker
-	if err := worker.Start(ctx); err != nil {
-		log.Fatalf("Worker failed: %v", err)
+	// Start the consumer
+	if err := consumer.Start(ctx); err != nil {
+		log.Fatalf("Consumer failed: %v", err)
 	}
-}
-
-// ScrapingWorker is a simplified worker that processes scraping jobs
-type ScrapingWorker struct {
-	embClient *emb.OllamaClient
-	vecClient *vec.QdrantClient
-	docStore  *repo.PostgresStore
-}
-
-// NewScrapingWorker creates a new scraping worker
-func NewScrapingWorker(embClient *emb.OllamaClient, vecClient *vec.QdrantClient, docStore *repo.PostgresStore) *ScrapingWorker {
-	return &ScrapingWorker{
-		embClient: embClient,
-		vecClient: vecClient,
-		docStore:  docStore,
-	}
-}
-
-// Start starts the worker (placeholder for now)
-func (w *ScrapingWorker) Start(ctx context.Context) error {
-	log.Println("Worker started. Press Ctrl+C to stop.")
-
-	// Keep the worker running until context is cancelled
-	<-ctx.Done()
-
-	log.Println("Worker stopped.")
-	return nil
 }

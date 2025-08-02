@@ -111,64 +111,7 @@ func (s *Service) Chat(message string) (string, error) {
 	// Step 5: Generate tutorial response using LLM with context
 	var tutorialPrompt string
 	if hasRelevantContent {
-		tutorialPrompt = fmt.Sprintf(`%sUser Question: %s
-
-Please generate a comprehensive tutorial in Markdown format based on the documentation above. Structure your response as follows:
-
-# [Topic Name] Tutorial
-
-## Overview
-[Brief 2-3 sentence explanation of the topic]
-
-## What You'll Learn
-- [Learning objective 1]
-- [Learning objective 2]
-- [Learning objective 3]
-
-## Prerequisites
-- [Prerequisite 1]
-- [Prerequisite 2]
-
-## Step-by-Step Guide
-
-### Step 1: [First Step]
-[Detailed explanation with examples]
-
-### Step 2: [Second Step]
-[Detailed explanation with examples]
-
-### Step 3: [Third Step]
-[Detailed explanation with examples]
-
-## Code Examples
-
-### Basic Example
-```[language]
-[Code example here]
-```
-
-### Advanced Example
-```[language]
-[More complex code example]
-```
-
-## Best Practices
-- [Best practice 1]
-- [Best practice 2]
-- [Best practice 3]
-
-## Common Pitfalls to Avoid
-- [Pitfall 1]
-- [Pitfall 2]
-
-## Summary
-[Brief summary of what was covered]
-
-## Next Steps
-- [What to learn next 1]
-- [What to learn next 2]
-
-Keep the tutorial comprehensive, well-structured, and beginner-friendly. Use proper Markdown formatting with headers, code blocks, and bullet points.`, context, message)
+		tutorialPrompt = fmt.Sprintf("%sUser Question: %s\n\nPlease generate a comprehensive tutorial in Markdown format based on the documentation above. Structure your response as follows:\n\n# [Topic Name] Tutorial\n\n## Overview\n[Brief 2-3 sentence explanation of the topic]\n\n## What You'll Learn\n- [Learning objective 1]\n- [Learning objective 2]\n- [Learning objective 3]\n\n## Prerequisites\n- [Prerequisite 1]\n- [Prerequisite 2]\n\n## Step-by-Step Guide\n\n### Step 1: [First Step]\n[Detailed explanation with examples]\n\n### Step 2: [Second Step]\n[Detailed explanation with examples]\n\n### Step 3: [Third Step]\n[Detailed explanation with examples]\n\n## Code Examples\n\n### Basic Example\n```[language]\n[Code example here]\n```\n\n### Advanced Example\n```[language]\n[More complex code example]\n```\n\n## Best Practices\n- [Best practice 1]\n- [Best practice 2]\n- [Best practice 3]\n\n## Common Pitfalls to Avoid\n- [Pitfall 1]\n- [Pitfall 2]\n\n## Summary\n[Brief summary of what was covered]\n\n## Next Steps\n- [What to learn next 1]\n- [What to learn next 2]\n\nKeep the tutorial comprehensive, well-structured, and beginner-friendly. Use proper Markdown formatting with headers, code blocks, and bullet points.", context, message)
 	} else {
 		// No relevant content found, provide general response
 		tutorialPrompt = fmt.Sprintf(`User Question: %s
@@ -245,7 +188,7 @@ func (s *Service) storeResponseForLearning(userQuery, llmResponse string, wasBas
 
 	// Cache the document
 	docCache := s.cache.DocumentCache()
-	docCache.Set(ctx, responseDoc.ID, responseDoc, cache.DefaultTTL)
+	docCache.Set(ctx, responseDoc, cache.DefaultTTL)
 
 	// Store vector with metadata
 	metadata := map[string]interface{}{
@@ -294,7 +237,7 @@ func (s *Service) getDocumentWithCache(ctx context.Context, id string) (*types.D
 
 	// Cache the document for future use
 	if doc != nil {
-		docCache.Set(ctx, doc.ID, doc, cache.DefaultTTL)
+		docCache.Set(ctx, doc, cache.DefaultTTL)
 	}
 
 	return doc, nil
@@ -324,7 +267,7 @@ func (s *Service) AddDocument(doc *types.Document) error {
 
 	// Cache the document
 	docCache := s.cache.DocumentCache()
-	docCache.Set(ctx, doc.ID, doc, cache.DefaultTTL)
+	docCache.Set(ctx, doc, cache.DefaultTTL)
 
 	// Store vector with document metadata
 	metadata := map[string]interface{}{
@@ -477,57 +420,7 @@ func (s *Service) GenerateTutorialFromScrapedData(url, topic string) (string, er
 		context = "Based on the following scraped documentation:\n\n" + strings.Join(contextDocs, "\n\n") + "\n\n"
 	}
 
-	tutorialPrompt := fmt.Sprintf(`%sGenerate a comprehensive tutorial for: %s
-
-Please create a well-structured tutorial in Markdown format based on the scraped documentation above. Structure your response as follows:
-
-# Complete Tutorial: %s
-
-## Overview
-[Provide a clear, concise overview of the topic]
-
-## Prerequisites
-[List any prerequisites or basic knowledge needed]
-
-## Step-by-Step Guide
-
-### Step 1: [First Step]
-[Detailed explanation with examples]
-
-### Step 2: [Second Step]
-[Detailed explanation with examples]
-
-### Step 3: [Third Step]
-[Detailed explanation with examples]
-
-## Code Examples
-
-### Basic Example
-```[language]
-[Provide practical code examples]
-```
-
-### Advanced Example
-```[language]
-[More complex examples]
-```
-
-## Best Practices
-- [Best practice 1]
-- [Best practice 2]
-- [Best practice 3]
-
-## Common Pitfalls to Avoid
-- [Pitfall 1]
-- [Pitfall 2]
-
-## Summary
-[Brief summary of what was covered]
-
-## Next Steps
-[Suggest what to learn next]
-
-Make the tutorial comprehensive yet easy to follow, with practical examples and clear explanations. Use proper Markdown formatting.`, context, topic, topic)
+	tutorialPrompt := fmt.Sprintf("%sGenerate a comprehensive tutorial for: %s\n\nPlease create a well-structured tutorial in Markdown format based on the scraped documentation above. Structure your response as follows:\n\n# Complete Tutorial: %s\n\n## Overview\n[Provide a clear, concise overview of the topic]\n\n## Prerequisites\n[List any prerequisites or basic knowledge needed]\n\n## Step-by-Step Guide\n\n### Step 1: [First Step]\n[Detailed explanation with examples]\n\n### Step 2: [Second Step]\n[Detailed explanation with examples]\n\n### Step 3: [Third Step]\n[Detailed explanation with examples]\n\n## Code Examples\n\n### Basic Example\n```[language]\n[Provide practical code examples]\n```\n\n### Advanced Example\n```[language]\n[More complex examples]\n```\n\n## Best Practices\n- [Best practice 1]\n- [Best practice 2]\n- [Best practice 3]\n\n## Common Pitfalls to Avoid\n- [Pitfall 1]\n- [Pitfall 2]\n\n## Summary\n[Brief summary of what was covered]\n\n## Next Steps\n[Suggest what to learn next]\n\nMake the tutorial comprehensive yet easy to follow, with practical examples and clear explanations. Use proper Markdown formatting.", context, topic, topic)
 
 	response, err := s.embClient.Chat(tutorialPrompt)
 	if err != nil {
@@ -561,34 +454,7 @@ func (s *Service) ScrapeAndGenerateTutorial(url, topic string) (string, error) {
 	if len(tutorialContent) > 0 {
 		context := "Based on the following scraped documentation:\n\n" + strings.Join(contextDocs, "\n\n") + "\n\n"
 
-		tutorialPrompt := fmt.Sprintf(`%sGenerate a quick tutorial for: %s
-
-Please create a concise tutorial in Markdown format based on the scraped documentation above. Structure your response as follows:
-
-# Quick Tutorial: %s
-
-## What is %s?
-[Brief explanation]
-
-## Key Concepts:
-- [Concept 1]
-- [Concept 2]
-- [Concept 3]
-
-## Basic Example:
-```[language]
-[Simple, practical example]
-```
-
-## Common Use Cases:
-- [Use case 1]
-- [Use case 2]
-
-## Tips:
-- [Tip 1]
-- [Tip 2]
-
-Keep it concise and practical for beginners. Use proper Markdown formatting.`, context, topic, topic, topic)
+		tutorialPrompt := fmt.Sprintf("%sGenerate a quick tutorial for: %s\n\nPlease create a concise tutorial in Markdown format based on the scraped documentation above. Structure your response as follows:\n\n# Quick Tutorial: %s\n\n## What is %s?\n[Brief explanation]\n\n## Key Concepts:\n- [Concept 1]\n- [Concept 2]\n- [Concept 3]\n\n## Basic Example:\n```[language]\n[Simple, practical example]\n```\n\n## Common Use Cases:\n- [Use case 1]\n- [Use case 2]\n\n## Tips:\n- [Tip 1]\n- [Tip 2]\n\nKeep it concise and practical for beginners. Use proper Markdown formatting.", context, topic, topic, topic)
 
 		response, err := s.embClient.Chat(tutorialPrompt)
 		if err != nil {
@@ -672,36 +538,9 @@ func (s *Service) ChatWithHistory(sessionID, message string) (string, error) {
 	prompt.WriteString(fmt.Sprintf("Current user question: %s\n\n", message))
 
 	if hasRelevantContent {
-		prompt.WriteString(`Please generate a short, focused tutorial in Markdown format based on the documentation above. Consider the conversation history for context. Structure your response as follows:
-
-# Quick Tutorial: [Topic Name]
-
-## What is [Topic]?
-[Brief 1-2 sentence explanation]
-
-## Key Concepts:
-- [Concept 1]
-- [Concept 2]
-- [Concept 3]
-
-## Basic Example:
-```[language]
-[Provide a simple, practical example]
-```
-
-## Common Use Cases:
-- [Use case 1]
-- [Use case 2]
-
-## Tips:
-- [Tip 1]
-- [Tip 2]
-
-Keep the tutorial concise, practical, and beginner-friendly. Use proper Markdown formatting.`)
+		prompt.WriteString("Please generate a short, focused tutorial in Markdown format based on the documentation above. Consider the conversation history for context. Structure your response as follows:\n\n# Quick Tutorial: [Topic Name]\n\n## What is [Topic]?\n[Brief 1-2 sentence explanation]\n\n## Key Concepts:\n- [Concept 1]\n- [Concept 2]\n- [Concept 3]\n\n## Basic Example:\n```[language]\n[Provide a simple, practical example]\n```\n\n## Common Use Cases:\n- [Use case 1]\n- [Use case 2]\n\n## Tips:\n- [Tip 1]\n- [Tip 2]\n\nKeep the tutorial concise, practical, and beginner-friendly. Use proper Markdown formatting.")
 	} else {
-		prompt.WriteString(`Please provide a helpful and informative tutorial in Markdown format about this topic. Consider the conversation history for context. If you don't have specific information, provide general guidance and suggest where they might find more detailed information.
-
-Structure your response as a well-formatted Markdown tutorial with proper headers, code blocks, and bullet points.`)
+		prompt.WriteString("Please provide a helpful and informative tutorial in Markdown format about this topic. Consider the conversation history for context. If you don't have specific information, provide general guidance and suggest where they might find more detailed information.\n\nStructure your response as a well-formatted Markdown tutorial with proper headers, code blocks, and bullet points.")
 	}
 
 	response, err := s.embClient.Chat(prompt.String())

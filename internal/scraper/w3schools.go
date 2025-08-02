@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"tech-docs-ai/internal/app"
+	"tech-docs-ai/internal/types"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -363,7 +363,7 @@ func (s *W3SchoolsScraper) extractMetadata(doc *goquery.Document, url string) ma
 }
 
 // ConvertToDocument converts scraped content to a Document for storage.
-func (s *W3SchoolsScraper) ConvertToDocument(content *ScrapedContent) *app.Document {
+func (s *W3SchoolsScraper) ConvertToDocument(content *ScrapedContent) *types.Document {
 	// Combine content and examples
 	fullContent := content.Content
 	if len(content.Examples) > 0 {
@@ -373,7 +373,7 @@ func (s *W3SchoolsScraper) ConvertToDocument(content *ScrapedContent) *app.Docum
 		}
 	}
 
-	return &app.Document{
+	return &types.Document{
 		ID:        fmt.Sprintf("w3s_%d", content.Timestamp.UnixNano()),
 		Title:     content.Title,
 		Content:   fullContent,

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"sync"
 
 	"tech-docs-ai/internal/emb"
@@ -19,12 +20,13 @@ import (
 
 // Consumer is a Kafka consumer for processing scraping jobs.
 type Consumer struct {
-	reader     *kafka.Reader
-	scraper    *scraper.W3SchoolsScraper
-	docStore   *repo.PostgresStore
-	embClient  *emb.OllamaClient
-	vecClient  *vec.QdrantClient
-	workerPool *WorkerPool
+	reader          *kafka.Reader
+	w3schoolsScraper *scraper.W3SchoolsScraper
+	universalScraper *scraper.UniversalScraper
+	docStore        *repo.PostgresStore
+	embClient       *emb.OllamaClient
+	vecClient       *vec.QdrantClient
+	workerPool      *WorkerPool
 }
 
 // NewConsumer creates a new Kafka consumer.
@@ -43,12 +45,13 @@ func NewConsumer(docStore *repo.PostgresStore, embClient *emb.OllamaClient, vecC
 	})
 
 	return &Consumer{
-		reader:     reader,
-		scraper:    scraper.NewW3SchoolsScraper(),
-		docStore:   docStore,
-		embClient:  embClient,
-		vecClient:  vecClient,
-		workerPool: NewWorkerPool(5), // 5 workers
+		reader:           reader,
+		w3schoolsScraper: scraper.NewW3SchoolsScraper(),
+		universalScraper: scraper.NewUniversalScraper(),
+		docStore:         docStore,
+		embClient:        embClient,
+		vecClient:        vecClient,
+		workerPool:       NewWorkerPool(5), // 5 workers
 	}
 }
 
@@ -92,15 +95,29 @@ func (c *Consumer) processMessage(m kafka.Message) {
 		return
 	}
 
-	// Scrape the page
-	content, err := c.scraper.ScrapePage(job.URL)
-	if err != nil {
-		log.Printf("Failed to scrape %s: %v", job.URL, err)
-		return
-	}
+	// Choose appropriate scraper based on URL
+	var content *scraper.ScrapedContent
+	var doc *types.Document
 
-	// Convert to document
-	doc := c.scraper.ConvertToDocument(content)
+	if strings.Contains(job.URL, "w3schools.com") {
+		// Use W3Schools-specific scraper
+		var err error
+		content, err = c.w3schoolsScraper.ScrapePage(job.URL)
+		if err != nil {
+			log.Printf("Failed to scrape %s with W3Schools scraper: %v", job.URL, err)
+			return
+		}
+		doc = c.w3schoolsScraper.ConvertToDocument(content)
+	} else {
+		// Use universal scraper for all other URLs
+		var err error
+		content, err = c.universalScraper.ScrapePage(job.URL)
+		if err != nil {
+			log.Printf("Failed to scrape %s with universal scraper: %v", job.URL, err)
+			return
+		}
+		doc = c.universalScraper.ConvertToDocument(content)
+	}
 
 	// Override category and tags if provided in job
 	if job.Category != "" {
@@ -111,7 +128,7 @@ func (c *Consumer) processMessage(m kafka.Message) {
 	}
 
 	// Store document and vector
-	if err := c.storeDocumentWithVector(doc); err != nil {
+	if err := c.storeDocumentWithVector(doc, job.URL); err != nil {
 		log.Printf("Failed to store document: %v", err)
 		return
 	}
@@ -120,7 +137,7 @@ func (c *Consumer) processMessage(m kafka.Message) {
 }
 
 // storeDocumentWithVector stores a document in both database and vector store.
-func (c *Consumer) storeDocumentWithVector(doc *types.Document) error {
+func (c *Consumer) storeDocumentWithVector(doc *types.Document, url string) error {
 	// Generate embedding for the document content
 	vector, err := c.embClient.Embed(doc.Content)
 	if err != nil {
@@ -133,13 +150,18 @@ func (c *Consumer) storeDocumentWithVector(doc *types.Document) error {
 	}
 
 	// Store vector with document metadata
+	source := "universal"
+	if strings.Contains(url, "w3schools.com") {
+		source = "w3schools"
+	}
+	
 	metadata := map[string]interface{}{
 		"document_id": doc.ID,
 		"title":       doc.Title,
 		"category":    doc.Category,
 		"tags":        doc.Tags,
 		"author":      doc.Author,
-		"source":      "w3schools",
+		"source":      source,
 	}
 
 	if err := c.vecClient.StoreVector(vector, metadata); err != nil {

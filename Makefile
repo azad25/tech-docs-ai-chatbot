@@ -36,17 +36,20 @@ clean:
 # Start all services
 up:
 	@echo "Starting Tech Docs AI services..."
-	@echo "Pulling Ollama models..."
-	@docker run --rm -v ollama_data:/root/.ollama ollama/ollama:latest ollama pull tinyllama
-	@docker run --rm -v ollama_data:/root/.ollama ollama/ollama:latest ollama pull nomic-embed-text
 	@echo "Starting Docker Compose services..."
-	@docker-compose up -d
+	@docker compose up -d
+	@echo "Waiting for Ollama to be ready..."
+	@sleep 10
+	@echo "Pulling Ollama models..."
+	@docker compose exec ollama ollama pull llama3.2:1b
+	@docker compose exec ollama ollama pull nomic-embed-text
+	@docker compose exec ollama ollama serve
 	@echo "Services started! Access the application at http://localhost"
 
 # Stop all services
 down:
 	@echo "Stopping services..."
-	@docker-compose down
+	@docker compose down
 
 # Run tests
 test:

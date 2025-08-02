@@ -12,6 +12,13 @@ import (
 	"syscall"
 	"time"
 
+	"tech-docs-ai/internal/app"
+	"tech-docs-ai/internal/cache"
+	"tech-docs-ai/internal/emb"
+	"tech-docs-ai/internal/kafka"
+	"tech-docs-ai/internal/repo"
+	"tech-docs-ai/internal/vec"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -107,22 +114,10 @@ func main() {
 	defer postgresStore.Close()
 
 	// Initialize Redis cache
-	// Configure Redis connection pool
-	redisConfig := &cache.RedisConfig{
-		Addr:               getEnv("REDIS_ADDR", "localhost:6379"),
-		Password:           getEnv("REDIS_PASSWORD", ""),
-		DB:                 0,
-		PoolSize:           50,                // Maximum number of connections
-		MinIdleConns:       10,                // Minimum number of idle connections
-		MaxConnAge:         30 * time.Minute,  // Maximum age of a connection
-		PoolTimeout:        4 * time.Second,   // Time to wait for a connection from the pool
-		IdleTimeout:        5 * time.Minute,   // How long connections can be idle
-		IdleCheckFrequency: 1 * time.Minute,   // How often to check for idle connections
-	}
-	
-	redisCache, err := cache.NewRedisCache(redisConfig)
+	redisCache, err := cache.NewRedisCache()
 	if err != nil {
-		log.Fatalf("Failed to initialize Redis cache: %v", err)
+		logger.Error("Failed to initialize Redis cache", err, nil)
+		os.Exit(1)
 	}
 	defer redisCache.Close()
 	

@@ -12,7 +12,7 @@ import (
 func TestRateLimiter(t *testing.T) {
 	testCases := []struct {
 		name           string
-		rate          float64
+		rate          int
 		burst         int
 		requestCount  int
 		expectedCodes []int

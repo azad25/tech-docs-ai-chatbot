@@ -43,7 +43,7 @@ up:
 	@echo "Pulling Ollama models..."
 	@docker compose exec ollama ollama pull llama3.2:1b
 	@docker compose exec ollama ollama pull nomic-embed-text
-	@docker compose exec ollama ollama serve
+	@docker compose exec -d ollama ollama serve
 	@echo "Services started! Access the application at http://localhost"
 
 # Stop all services

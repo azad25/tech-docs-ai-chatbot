@@ -1,47 +1,24 @@
-=== RUN   TestSystemIntegration
-    integration_test.go:61: PostgreSQL store creation failed (expected in test environment): failed to ping database: dial tcp 127.0.0.1:5432: connect: connection refused
-    integration_test.go:65: System integration test completed - all components can be initialized
---- PASS: TestSystemIntegration (0.00s)
-=== RUN   TestHandlerCreation
-    integration_test.go:85: Handler creation test completed successfully
---- PASS: TestHandlerCreation (0.00s)
-=== RUN   TestAPIEndpointsIntegration
-=== RUN   TestAPIEndpointsIntegration/Chat_endpoint
-=== RUN   TestAPIEndpointsIntegration/Add_document_endpoint
-=== RUN   TestAPIEndpointsIntegration/Search_documents_endpoint
-=== RUN   TestAPIEndpointsIntegration/Scrape_endpoint
-=== NAME  TestAPIEndpointsIntegration
-    integration_test.go:213: API endpoints integration test completed successfully
---- PASS: TestAPIEndpointsIntegration (0.00s)
-    --- PASS: TestAPIEndpointsIntegration/Chat_endpoint (0.00s)
-    --- PASS: TestAPIEndpointsIntegration/Add_document_endpoint (0.00s)
-    --- PASS: TestAPIEndpointsIntegration/Search_documents_endpoint (0.00s)
-    --- PASS: TestAPIEndpointsIntegration/Scrape_endpoint (0.00s)
-=== RUN   TestScrapersIntegration
-=== RUN   TestScrapersIntegration/W3Schools_scraper
-2025/08/02 18:06:25 Scraping: http://127.0.0.1:40669
-=== RUN   TestScrapersIntegration/Universal_scraper
-2025/08/02 18:06:25 Universal scraping: http://127.0.0.1:46331
-=== NAME  TestScrapersIntegration
-    integration_test.go:283: Scrapers integration test completed successfully
---- PASS: TestScrapersIntegration (0.00s)
-    --- PASS: TestScrapersIntegration/W3Schools_scraper (0.00s)
-    --- PASS: TestScrapersIntegration/Universal_scraper (0.00s)
-=== RUN   TestFullWorkflowIntegration
-    integration_test.go:289: Skipping full workflow test - requires running services
---- SKIP: TestFullWorkflowIntegration (0.00s)
-=== RUN   TestConcurrentRequests
-    integration_test.go:381: Concurrent requests test completed successfully
---- PASS: TestConcurrentRequests (0.00s)
-=== RUN   TestErrorHandling
-=== RUN   TestErrorHandling/Chat_error_handling
-2025/08/02 18:06:25 Chat error: mock chat error
-=== RUN   TestErrorHandling/Document_error_handling
-2025/08/02 18:06:25 Add document error: mock add document error
-=== NAME  TestErrorHandling
-    integration_test.go:423: Error handling test completed successfully
---- PASS: TestErrorHandling (0.00s)
-    --- PASS: TestErrorHandling/Chat_error_handling (0.00s)
-    --- PASS: TestErrorHandling/Document_error_handling (0.00s)
-PASS
-ok  	command-line-arguments	0.017s
+go: inconsistent vendoring in /home/ferdos/Documents/tech-docs-ai-chatbot:
+	github.com/PuerkitoBio/goquery@v1.8.1: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/go-chi/chi/v5@v5.2.2: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/go-chi/cors@v1.2.2: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/gorilla/websocket@v1.5.0: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/lib/pq@v1.10.9: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/redis/go-redis/v9@v9.11.0: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/segmentio/kafka-go@v0.4.47: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/stretchr/testify@v1.8.0: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	golang.org/x/time@v0.8.0: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/andybalholm/cascadia@v1.3.3: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/cespare/xxhash/v2@v2.3.0: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/davecgh/go-spew@v1.1.1: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/dgryski/go-rendezvous@v0.0.0-20200823014737-9f7001d12a5f: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/klauspost/compress@v1.15.9: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/pierrec/lz4/v4@v4.1.15: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/pmezard/go-difflib@v1.0.0: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/stretchr/objx@v0.4.0: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	golang.org/x/net@v0.39.0: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	gopkg.in/yaml.v3@v3.0.1: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+
+	To ignore the vendor directory, use -mod=readonly or -mod=mod.
+	To sync the vendor directory, run:
+		go mod vendor

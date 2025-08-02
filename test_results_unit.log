@@ -1,18 +1,24 @@
-# tech-docs-ai/internal/app [tech-docs-ai/internal/app.test]
-internal/app/handler_test.go:84:5: t.Run undefined (type struct{name string; inputMessage string; expectedCode int; serviceError error; serviceResponse string} has no field or method Run)
-internal/app/handler_test.go:90:26: cannot use mockService (variable of type *MockService) as ServiceInterface value in argument to NewHandler: *MockService does not implement ServiceInterface (missing method GenerateTutorialFromScrapedData)
-internal/app/handler_test.go:153:5: t.Run undefined (type struct{name string; query string; limit string; expectedCode int; expectedDocs []*types.Document; serviceError error} has no field or method Run)
-internal/app/handler_test.go:160:26: cannot use mockService (variable of type *MockService) as ServiceInterface value in argument to NewHandler: *MockService does not implement ServiceInterface (missing method GenerateTutorialFromScrapedData)
-internal/app/handler_test.go:218:5: t.Run undefined (type struct{name string; doc *types.Document; expectedCode int; serviceError error} has no field or method Run)
-internal/app/handler_test.go:224:26: cannot use mockService (variable of type *MockService) as ServiceInterface value in argument to NewHandler: *MockService does not implement ServiceInterface (missing method GenerateTutorialFromScrapedData)
-internal/app/service_test.go:83:5: t.Run undefined (type struct{name string; message string; expectedResp string; embeddingError error; searchError error; searchResults []*types.Document; expectedError bool} has no field or method Run)
-internal/app/service_test.go:93:31: not enough arguments in call to NewService
-	have (*MockEmbeddingClient, *MockVectorClient)
-	want (embClient, vecClient, docStore, kafkaProducer, *cache.RedisCache)
-internal/app/service_test.go:152:5: t.Run undefined (type struct{name string; doc *types.Document; embeddingError error; addError error; expectedError bool} has no field or method Run)
-internal/app/service_test.go:162:31: not enough arguments in call to NewService
-	have (*MockEmbeddingClient, *MockVectorClient)
-	want (embClient, vecClient, docStore, kafkaProducer, *cache.RedisCache)
-internal/app/service_test.go:162:31: too many errors
-FAIL	tech-docs-ai/internal/app [build failed]
-FAIL
+go: inconsistent vendoring in /home/ferdos/Documents/tech-docs-ai-chatbot:
+	github.com/PuerkitoBio/goquery@v1.8.1: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/go-chi/chi/v5@v5.2.2: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/go-chi/cors@v1.2.2: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/gorilla/websocket@v1.5.0: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/lib/pq@v1.10.9: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/redis/go-redis/v9@v9.11.0: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/segmentio/kafka-go@v0.4.47: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/stretchr/testify@v1.8.0: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	golang.org/x/time@v0.8.0: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/andybalholm/cascadia@v1.3.3: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/cespare/xxhash/v2@v2.3.0: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/davecgh/go-spew@v1.1.1: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/dgryski/go-rendezvous@v0.0.0-20200823014737-9f7001d12a5f: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/klauspost/compress@v1.15.9: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/pierrec/lz4/v4@v4.1.15: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/pmezard/go-difflib@v1.0.0: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	github.com/stretchr/objx@v0.4.0: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	golang.org/x/net@v0.39.0: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+	gopkg.in/yaml.v3@v3.0.1: is explicitly required in go.mod, but not marked as explicit in vendor/modules.txt
+
+	To ignore the vendor directory, use -mod=readonly or -mod=mod.
+	To sync the vendor directory, run:
+		go mod vendor

@@ -74,7 +74,7 @@ const Sidebar: React.FC = () => {
               </motion.div>
               <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                 <Typography variant="h6" sx={{ fontWeight: 700, color: "#1D1D1F", mb: 0.5 }}>
-                  TechDocs AI
+                  ChatBot
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Box

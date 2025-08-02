@@ -1,6 +1,7 @@
 # Tech Docs AI - Documentation and Tutorial Chat Service
+![](./preview.png)
 
-Welcome to Tech Docs AI, a comprehensive documentation and tutorial chat service that provides AI-powered responses using RAG (Retrieval-Augmented Generation) with llama3.2:1b and vector embeddings. The system learns from user interactions, maintains conversation history, and provides well-formatted Markdown responses for display in Next.js frontends.
+Tech Docs AI chat service that provides AI-powered responses using RAG (Retrieval-Augmented Generation) with llama3.2:1b and vector embeddings. The system learns from user interactions, maintains conversation history, and provides well-formatted Markdown responses for display in Next.js frontends.
 
 ## 🚀 Features
 

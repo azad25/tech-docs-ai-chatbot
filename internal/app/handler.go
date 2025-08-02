@@ -65,33 +65,83 @@ type chatWithHistoryRequest struct {
 	Message   string `json:"message"`
 }
 
-// HandleChat handles requests to the chat endpoint.
+// Error codes for API responses
+const (
+	ErrInvalidRequest    = "INVALID_REQUEST"
+	ErrInternalServer    = "INTERNAL_SERVER_ERROR"
+	ErrValidation        = "VALIDATION_ERROR"
+	ErrResourceNotFound  = "RESOURCE_NOT_FOUND"
+	ErrUnauthorized      = "UNAUTHORIZED"
+)
+
+// sendError sends a standardized error response
+func sendError(w http.ResponseWriter, code int, errCode, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(ErrorResponse{
+		Error: message,
+		Code:  errCode,
+	})
+}
+
+// validateRequest validates the request body against a schema
+func validateRequest(r *http.Request, v interface{}) error {
+	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
+		return fmt.Errorf("invalid request body: %w", err)
+	}
+
+	// Add validation for specific request types
+	switch req := v.(type) {
+	case *chatRequest:
+		if strings.TrimSpace(req.Message) == "" {
+			return fmt.Errorf("message cannot be empty")
+		}
+		if len(req.Message) > 2000 {
+			return fmt.Errorf("message too long (max 2000 characters)")
+		}
+	case *documentRequest:
+		if strings.TrimSpace(req.Title) == "" {
+			return fmt.Errorf("title cannot be empty")
+		}
+		if strings.TrimSpace(req.Content) == "" {
+			return fmt.Errorf("content cannot be empty")
+		}
+	case *scrapeRequest:
+		if strings.TrimSpace(req.URL) == "" {
+			return fmt.Errorf("URL cannot be empty")
+		}
+		if _, err := url.Parse(req.URL); err != nil {
+			return fmt.Errorf("invalid URL format")
+		}
+	}
+
+	return nil
+}
+
+// HandleChat handles requests to the chat endpoint with improved error handling
 func (h *Handler) HandleChat(w http.ResponseWriter, r *http.Request) {
 	var req chatRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	if err := validateRequest(r, &req); err != nil {
+		sendError(w, http.StatusBadRequest, ErrValidation, err.Error())
 		return
 	}
 
-	log.Printf("Received chat request: %s", req.Message)
-
 	response, err := h.service.Chat(req.Message)
 	if err != nil {
-		http.Error(w, "Failed to get chat response", http.StatusInternalServerError)
+		sendError(w, http.StatusInternalServerError, ErrInternalServer, "Failed to process chat request")
+		log.Printf("Chat error: %v", err)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(chatResponse{Response: response}); err != nil {
-		log.Printf("Failed to write response: %v", err)
-	}
+	json.NewEncoder(w).Encode(chatResponse{Response: response})
 }
 
-// HandleAddDocument handles requests to add a new document.
+// HandleAddDocument handles requests to add a new document with improved validation
 func (h *Handler) HandleAddDocument(w http.ResponseWriter, r *http.Request) {
 	var req documentRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	if err := validateRequest(r, &req); err != nil {
+		sendError(w, http.StatusBadRequest, ErrValidation, err.Error())
 		return
 	}
 
@@ -105,7 +155,8 @@ func (h *Handler) HandleAddDocument(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.service.AddDocument(doc); err != nil {
-		http.Error(w, "Failed to add document", http.StatusInternalServerError)
+		sendError(w, http.StatusInternalServerError, ErrInternalServer, "Failed to add document")
+		log.Printf("Add document error: %v", err)
 		return
 	}
 
@@ -131,25 +182,29 @@ func (h *Handler) HandleScrapeDocument(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "Scraping job queued successfully"})
 }
 
-// HandleSearchDocuments handles requests to search documents.
+// HandleSearchDocuments handles requests to search documents with improved validation
 func (h *Handler) HandleSearchDocuments(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("q")
-	if query == "" {
-		http.Error(w, "Query parameter 'q' is required", http.StatusBadRequest)
+	if strings.TrimSpace(query) == "" {
+		sendError(w, http.StatusBadRequest, ErrValidation, "Query parameter 'q' is required")
 		return
 	}
 
 	limitStr := r.URL.Query().Get("limit")
 	limit := 10
 	if limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err == nil {
-			limit = l
+		l, err := strconv.Atoi(limitStr)
+		if err != nil || l < 1 || l > 100 {
+			sendError(w, http.StatusBadRequest, ErrValidation, "Invalid limit parameter (must be between 1 and 100)")
+			return
 		}
+		limit = l
 	}
 
 	documents, err := h.service.SearchDocuments(query, limit)
 	if err != nil {
-		http.Error(w, "Failed to search documents", http.StatusInternalServerError)
+		sendError(w, http.StatusInternalServerError, ErrInternalServer, "Failed to search documents")
+		log.Printf("Search documents error: %v", err)
 		return
 	}
 

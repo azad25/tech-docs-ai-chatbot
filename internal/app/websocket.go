@@ -14,6 +14,7 @@ type WebSocketHandler struct {
 	upgrader websocket.Upgrader
 	clients  map[*websocket.Conn]bool
 	mutex    sync.RWMutex
+	allowedOrigins []string
 }
 
 // NewWebSocketHandler creates a new WebSocket handler
@@ -22,8 +23,20 @@ func NewWebSocketHandler(svc *Service) *WebSocketHandler {
 		service: svc,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
-				return true // Allow all origins for development
+				origin := r.Header.Get("Origin")
+				// In production, this should be configured via environment variables
+				allowedOrigins := []string{"http://localhost:3000", "http://localhost:8080"}
+				for _, allowed := range allowedOrigins {
+					if origin == allowed {
+						return true
+					}
+				}
+				log.Printf("Rejected WebSocket connection from origin: %s", origin)
+				return false
 			},
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			HandshakeTimeout: 10 * time.Second,
 		},
 		clients: make(map[*websocket.Conn]bool),
 	}
@@ -47,7 +60,7 @@ type WebSocketResponse struct {
 
 // HandleWebSocket handles WebSocket connections
 func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
-	// Upgrade the HTTP connection to WebSocket
+	// Set read/write deadlines
 	conn, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("Failed to upgrade connection to WebSocket: %v", err)
@@ -55,10 +68,31 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 	}
 	defer conn.Close()
 
-	// Add client to the list
+	// Set read/write limits and deadlines
+	conn.SetReadLimit(4096) // 4KB message size limit
+	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	conn.SetPongHandler(func(string) error {
+		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		return nil
+	})
+
+	// Add client to the list with mutex protection
 	h.mutex.Lock()
 	h.clients[conn] = true
 	h.mutex.Unlock()
+
+	// Start ping-pong routine
+	go func() {
+		ticker := time.NewTicker(54 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			<-ticker.C
+			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
+		}
+	}()
 
 	// Send welcome message
 	welcomeMsg := WebSocketResponse{
@@ -76,6 +110,16 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 		if err != nil {
 			log.Printf("WebSocket read error: %v", err)
 			break
+		}
+
+		// Validate message size
+		if len(msg.Message) > 2000 { // 2KB message limit
+			response := WebSocketResponse{
+				Type:  "error",
+				Error: "Message too large",
+			}
+			conn.WriteJSON(response)
+			continue
 		}
 
 		// Handle different message types

@@ -217,7 +217,7 @@ const Sidebar: React.FC = () => {
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
               }}
             >
-              Powered by llama3.2:1b & RAG
+              Powered by TinyLlama & RAG
             </Typography>
           </Box>
         </motion.div>

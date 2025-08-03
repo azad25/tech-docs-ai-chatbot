@@ -1,7 +1,8 @@
 # Tech Docs AI - Documentation and Tutorial Chat Service
+![](./preview-2.png)
 ![](./preview.png)
 
-Tech Docs AI chat service that provides AI-powered responses using RAG (Retrieval-Augmented Generation) with llama3.2:1b and vector embeddings. The system learns from user interactions, maintains conversation history, and provides well-formatted Markdown responses for display in Next.js frontends.
+Tech Docs AI chat service that provides AI-powered responses using RAG (Retrieval-Augmented Generation) with TinyLlama and vector embeddings. The system learns from user interactions, maintains conversation history, and provides well-formatted Markdown responses for display in Next.js frontends.
 
 ## 🚀 Features
 
@@ -9,7 +10,7 @@ Tech Docs AI chat service that provides AI-powered responses using RAG (Retrieva
 - **Event-Driven Architecture**: Kafka-based job queue for scalable scraping operations
 - **Worker Pools**: Concurrent processing of scraping jobs with configurable worker pools
 - **Vector Database**: Qdrant vector store for semantic search and similarity matching
-- **RAG System**: Retrieval-Augmented Generation using llama3.2:1b and Nomic embeddings
+- **RAG System**: Retrieval-Augmented Generation using TinyLlama and Nomic embeddings
 - **PostgreSQL Storage**: Reliable document storage with full-text search capabilities
 - **Redis Caching**: High-performance caching for documents, embeddings, search results, and chat sessions
 - **Conversation History**: Persistent chat sessions with context awareness
@@ -65,7 +66,7 @@ The application follows a microservices architecture with the following componen
 - **Qdrant**: Vector database for semantic search
 - **Kafka**: Message queue for scraping job distribution
 - **Redis**: High-performance caching layer for improved response times
-- **Ollama**: Local LLM serving llama3.2:1b and Nomic embeddings
+- **Ollama**: Local LLM serving TinyLlama and Nomic embeddings
 - **NGINX**: Reverse proxy for load balancing
 
 ## 🎯 Performance Optimizations
@@ -114,7 +115,7 @@ make up
 ```
 
 This command:
-- Pulls the required Ollama models (llama3.2:1b, nomic-embed-text)
+- Pulls the required Ollama models (TinyLlama, nomic-embed-text)
 - Builds the Go application Docker images
 - Starts all services (API server, worker, NGINX, PostgreSQL, Qdrant, Kafka, Redis, Ollama)
 
@@ -267,7 +268,7 @@ The application uses the following environment variables:
 # Ollama Configuration
 OLLAMA_API_URL=http://ollama:11434
 OLLAMA_MODEL=nomic-embed-text
-OLLAMA_CHAT_MODEL=llama3.2:1b
+OLLAMA_CHAT_MODEL=TinyLlama
 
 # Database Configuration
 POSTGRES_HOST=postgres
@@ -340,4 +341,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Ollama](https://ollama.ai/) for local LLM inference
 - [Qdrant](https://qdrant.tech/) for vector database
 - [Redis](https://redis.io/) for high-performance caching
-- [llama3.2:1b](https://github.com/jzhang38/llama3.2:1b) for the efficient language model
+- [TinyLlama](https://github.com/jzhang38/TinyLlama) for the efficient language model

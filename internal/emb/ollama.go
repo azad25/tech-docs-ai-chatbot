@@ -31,7 +31,7 @@ func NewOllamaClient() *OllamaClient {
 
 	chatModel := os.Getenv("OLLAMA_CHAT_MODEL")
 	if chatModel == "" {
-		chatModel = "llama3.2:1b"
+		chatModel = "tinyllama:latest"  // Much faster model
 	}
 
 	return &OllamaClient{
@@ -39,7 +39,7 @@ func NewOllamaClient() *OllamaClient {
 		model:     model,
 		chatModel: chatModel,
 		httpClient: &http.Client{
-			Timeout: 60 * time.Second,
+			Timeout: 300 * time.Second, // Increased to 5 minutes for LLM responses
 		},
 	}
 }

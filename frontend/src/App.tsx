@@ -29,45 +29,70 @@ export default function App() {
   const ws = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    // Use the same host as the current page, but with ws protocol
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsHost = window.location.host;
-    ws.current = new WebSocket(`${wsProtocol}//${wsHost}/ws`);
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    const reconnectDelay = 2000;
 
-    ws.current.onopen = () => {
-      console.log("WebSocket connected");
-    };
+    const connectWebSocket = () => {
+      // Use the same host as the current page, but with ws protocol
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsHost = window.location.host;
+      ws.current = new WebSocket(`${wsProtocol}//${wsHost}/ws`);
 
-    ws.current.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === "chat_response") {
-          setChatHistory((prev) => [...prev, { role: "assistant", content: data.response || data.message }]);
+      ws.current.onopen = () => {
+        console.log("WebSocket connected");
+        reconnectAttempts = 0; // Reset reconnect attempts on successful connection
+      };
+
+      ws.current.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log("WebSocket message received:", data);
+          
+          if (data.type === "connection") {
+            console.log("WebSocket connection confirmed:", data.response);
+          } else if (data.type === "chat_response") {
+            setChatHistory((prev) => [...prev, { role: "assistant", content: data.response || data.message }]);
+            setLoading(false);
+          } else if (data.type === "typing") {
+            setLoading(true);
+          } else if (data.type === "error") {
+            setLoading(false);
+            setChatHistory((prev) => [...prev, { role: "assistant", content: `❌ **Error occurred**\n\n${data.error}` }]);
+          }
+        } catch (e) {
+          console.error("Failed to parse WebSocket message:", e);
           setLoading(false);
-        } else if (data.type === "typing") {
-          setLoading(true);
-        } else if (data.type === "error") {
-          setLoading(false);
-          setChatHistory((prev) => [...prev, { role: "assistant", content: `<p style="color:red">Error: ${data.error}</p>` }]);
+          setChatHistory((prev) => [...prev, { role: "assistant", content: "⚠️ **Invalid response from server**\n\nReceived an invalid response format. Please try again." }]);
         }
-      } catch (e) {
+      };
+
+      ws.current.onerror = (error) => {
+        console.error("WebSocket error:", error);
         setLoading(false);
-        setChatHistory((prev) => [...prev, { role: "assistant", content: `<p style="color:red">Invalid response from server</p>` }]);
-      }
+      };
+
+      ws.current.onclose = (event) => {
+        console.log("WebSocket closed:", event.code, event.reason);
+        setLoading(false);
+        
+        // Only show disconnection message if it's not a normal closure and we're not reconnecting
+        if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
+          console.log(`Attempting to reconnect... (${reconnectAttempts + 1}/${maxReconnectAttempts})`);
+          reconnectAttempts++;
+          setTimeout(connectWebSocket, reconnectDelay);
+        } else if (reconnectAttempts >= maxReconnectAttempts) {
+          setChatHistory((prev) => [...prev, { role: "assistant", content: "🔌 **Connection lost**\n\nUnable to reconnect to the server after multiple attempts. Please refresh the page." }]);
+        }
+      };
     };
 
-    ws.current.onerror = () => {
-      setLoading(false);
-      setChatHistory((prev) => [...prev, { role: "assistant", content: `<p style="color:red">WebSocket error occurred</p>` }]);
-    };
-
-    ws.current.onclose = () => {
-      setLoading(false);
-      setChatHistory((prev) => [...prev, { role: "assistant", content: `<p style="color:red">Disconnected from server</p>` }]);
-    };
+    connectWebSocket();
 
     return () => {
-      ws.current?.close();
+      if (ws.current) {
+        ws.current.close(1000, "Component unmounting"); // Normal closure
+      }
     };
   }, []);
 

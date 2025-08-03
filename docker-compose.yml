@@ -23,7 +23,7 @@ services:
       # Add environment variables for Ollama configuration
       - OLLAMA_API_URL=http://ollama:11434
       - OLLAMA_MODEL=nomic-embed-text # Model for embeddings
-      - OLLAMA_CHAT_MODEL=llama3.2:1b # Model for chat completions
+      - OLLAMA_CHAT_MODEL=tinyllama:latest # Model for chat completions
       # Database configuration
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -61,7 +61,7 @@ services:
       # Add environment variables for Ollama configuration
       - OLLAMA_API_URL=http://ollama:11434
       - OLLAMA_MODEL=nomic-embed-text # Model for embeddings
-      - OLLAMA_CHAT_MODEL=llama3.2:1b # Model for chat completions
+      - OLLAMA_CHAT_MODEL=tinyllama:latest # Model for chat completions
       # Database configuration
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -141,6 +141,16 @@ services:
     networks:
       - tech-docs-ai-chat-network
     restart: unless-stopped
+    environment:
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=2
+      - OLLAMA_KEEP_ALIVE=10m
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
 
   kafka:
     image: confluentinc/cp-kafka:latest

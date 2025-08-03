@@ -108,37 +108,29 @@ func (s *Service) Chat(message string) (string, error) {
 		context = "Based on the following relevant documentation:\n\n" + strings.Join(contextDocs, "\n\n") + "\n\n"
 	}
 
-	// Step 5: Generate tutorial response using LLM with context
+	// Step 5: Generate tutorial response using LLM with context (simplified for speed)
 	var tutorialPrompt string
 	if hasRelevantContent {
-		tutorialPrompt = fmt.Sprintf("%sUser Question: %s\n\nPlease generate a comprehensive tutorial in Markdown format based on the documentation above. Structure your response as follows:\n\n# [Topic Name] Tutorial\n\n## Overview\n[Brief 2-3 sentence explanation of the topic]\n\n## What You'll Learn\n- [Learning objective 1]\n- [Learning objective 2]\n- [Learning objective 3]\n\n## Prerequisites\n- [Prerequisite 1]\n- [Prerequisite 2]\n\n## Step-by-Step Guide\n\n### Step 1: [First Step]\n[Detailed explanation with examples]\n\n### Step 2: [Second Step]\n[Detailed explanation with examples]\n\n### Step 3: [Third Step]\n[Detailed explanation with examples]\n\n## Code Examples\n\n### Basic Example\n```[language]\n[Code example here]\n```\n\n### Advanced Example\n```[language]\n[More complex code example]\n```\n\n## Best Practices\n- [Best practice 1]\n- [Best practice 2]\n- [Best practice 3]\n\n## Common Pitfalls to Avoid\n- [Pitfall 1]\n- [Pitfall 2]\n\n## Summary\n[Brief summary of what was covered]\n\n## Next Steps\n- [What to learn next 1]\n- [What to learn next 2]\n\nKeep the tutorial comprehensive, well-structured, and beginner-friendly. Use proper Markdown formatting with headers, code blocks, and bullet points.", context, message)
+		tutorialPrompt = fmt.Sprintf("%sQuestion: %s\n\nProvide a concise tutorial in Markdown format with:\n\n# %s\n\n## What is it?\n[Brief explanation]\n\n## Key Points:\n- Point 1\n- Point 2\n- Point 3\n\n## Basic Example:\n```\n[Simple example]\n```\n\nKeep it short and practical.", context, message, message)
 	} else {
-		// No relevant content found, provide general response
-		tutorialPrompt = fmt.Sprintf(`User Question: %s
+		// No relevant content found, provide simple response
+		tutorialPrompt = fmt.Sprintf(`Question: %s
 
-Please provide a helpful and informative tutorial in Markdown format about this topic. If you don't have specific information, provide general guidance and suggest where they might find more detailed information.
+Provide a brief tutorial in Markdown format:
 
-Structure your response as a well-formatted Markdown tutorial with:
-
-# [Topic Name]
+# %s
 
 ## Overview
-[Brief explanation]
+[Short explanation]
 
-## Key Concepts
-- [Concept 1]
-- [Concept 2]
+## Key Points
+- Main concept 1
+- Main concept 2
 
-## Getting Started
-[Basic steps]
+## Example
+[Simple example]
 
-## Examples
-[Practical examples]
-
-## Resources
-[Where to learn more]
-
-Use proper Markdown formatting with headers, code blocks, and bullet points.`, message)
+Keep it concise and helpful.`, message, message)
 	}
 
 	response, err := s.embClient.Chat(tutorialPrompt)

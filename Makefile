@@ -40,8 +40,8 @@ up:
 	@docker compose up -d
 	@echo "Waiting for Ollama to be ready..."
 	@sleep 10
-	@echo "Pulling Ollama models..."
-	@docker compose exec ollama ollama pull llama3.2:1b
+	@echo "Pulling AI Model..."
+	@docker compose exec ollama ollama pull tinyllama:latest
 	@docker compose exec ollama ollama pull nomic-embed-text
 	@docker compose exec -d ollama ollama serve
 	@echo "Services started! Access the application at http://localhost"

@@ -9,6 +9,8 @@ import {
   LinearProgress
 } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   AttachFile as AttachIcon,
   MoreVert as MoreIcon,
@@ -292,53 +294,166 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, onSendMessage, loadin
                             </Box>
                           </Box>
                         ) : (
-                          <Typography 
-                            variant="body2" 
-                            sx={{ 
+                          <Box
+                            sx={{
                               lineHeight: 1.6,
                               fontSize: "0.9rem",
-                              "& p": { margin: 0, mb: 1 },
+                              color: message.sender === "user" ? "white" : "#1D1D1F",
+                              "& p": { 
+                                margin: "0 0 12px 0",
+                                fontSize: "0.9rem",
+                                lineHeight: 1.6
+                              },
                               "& p:last-child": { mb: 0 },
                               "& h1, & h2, & h3, & h4, & h5, & h6": { 
-                                margin: "16px 0 8px 0",
+                                margin: "20px 0 12px 0",
+                                fontWeight: 700,
+                                color: message.sender === "user" ? "white" : "#1D1D1F",
+                                lineHeight: 1.3
+                              },
+                              "& h1": { 
+                                fontSize: "1.4rem",
+                                borderBottom: message.sender === "user" ? "2px solid rgba(255,255,255,0.3)" : "2px solid rgba(0,122,255,0.3)",
+                                paddingBottom: "8px",
+                                marginBottom: "16px"
+                              },
+                              "& h2": { 
+                                fontSize: "1.2rem",
+                                color: message.sender === "user" ? "rgba(255,255,255,0.95)" : "#007AFF"
+                              },
+                              "& h3": { 
+                                fontSize: "1.1rem",
+                                color: message.sender === "user" ? "rgba(255,255,255,0.9)" : "#5856D6"
+                              },
+                              "& code": { 
+                                backgroundColor: message.sender === "user" ? "rgba(255,255,255,0.25)" : "rgba(0,122,255,0.1)",
+                                color: message.sender === "user" ? "rgba(255,255,255,0.95)" : "#007AFF",
+                                padding: "3px 6px",
+                                borderRadius: "4px",
+                                fontFamily: "'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace",
+                                fontSize: "0.85rem",
+                                fontWeight: 500
+                              },
+                              "& pre": {
+                                backgroundColor: message.sender === "user" ? "rgba(255,255,255,0.15)" : "rgba(248,249,250,0.8)",
+                                border: message.sender === "user" ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.1)",
+                                padding: "16px",
+                                borderRadius: "8px",
+                                overflow: "auto",
+                                margin: "16px 0",
+                                boxShadow: "inset 0 2px 4px rgba(0,0,0,0.1)"
+                              },
+                              "& pre code": {
+                                backgroundColor: "transparent",
+                                padding: 0,
+                                color: message.sender === "user" ? "rgba(255,255,255,0.9)" : "#1D1D1F",
+                                fontSize: "0.8rem",
+                                lineHeight: 1.5
+                              },
+                              "& ul, & ol": { 
+                                margin: "12px 0",
+                                paddingLeft: "24px"
+                              },
+                              "& li": { 
+                                margin: "6px 0",
+                                lineHeight: 1.5
+                              },
+                              "& li::marker": {
+                                color: message.sender === "user" ? "rgba(255,255,255,0.7)" : "#007AFF"
+                              },
+                              "& blockquote": {
+                                borderLeft: `4px solid ${message.sender === "user" ? "rgba(255,255,255,0.5)" : "#007AFF"}`,
+                                paddingLeft: "16px",
+                                margin: "16px 0",
+                                fontStyle: "italic",
+                                opacity: 0.9,
+                                backgroundColor: message.sender === "user" ? "rgba(255,255,255,0.1)" : "rgba(0,122,255,0.05)",
+                                padding: "12px 16px",
+                                borderRadius: "0 8px 8px 0"
+                              },
+                              "& strong": { 
                                 fontWeight: 700,
                                 color: message.sender === "user" ? "white" : "#1D1D1F"
                               },
-                              "& h1": { fontSize: "1.3rem" },
-                              "& h2": { fontSize: "1.2rem" },
-                              "& h3": { fontSize: "1.1rem" },
-                              "& code": { 
-                                backgroundColor: message.sender === "user" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)",
-                                padding: "2px 6px",
-                                borderRadius: "4px",
-                                fontFamily: "monospace",
+                              "& em": { 
+                                fontStyle: "italic",
+                                color: message.sender === "user" ? "rgba(255,255,255,0.9)" : "#5856D6"
+                              },
+                              "& table": {
+                                width: "100%",
+                                borderCollapse: "collapse",
+                                margin: "16px 0",
                                 fontSize: "0.85rem"
                               },
-                              "& pre": {
-                                backgroundColor: message.sender === "user" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.05)",
-                                padding: "12px",
-                                borderRadius: "8px",
-                                overflow: "auto",
-                                margin: "12px 0",
-                                border: message.sender === "user" ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.1)"
+                              "& th, & td": {
+                                border: message.sender === "user" ? "1px solid rgba(255,255,255,0.3)" : "1px solid rgba(0,0,0,0.1)",
+                                padding: "8px 12px",
+                                textAlign: "left"
                               },
-                              "& ul, & ol": { 
-                                margin: "8px 0",
-                                paddingLeft: "20px"
+                              "& th": {
+                                backgroundColor: message.sender === "user" ? "rgba(255,255,255,0.2)" : "rgba(0,122,255,0.1)",
+                                fontWeight: 600
                               },
-                              "& li": { margin: "4px 0" },
-                              "& blockquote": {
-                                borderLeft: `3px solid ${message.sender === "user" ? "rgba(255,255,255,0.5)" : "#007AFF"}`,
-                                paddingLeft: "12px",
-                                margin: "12px 0",
-                                fontStyle: "italic",
-                                opacity: 0.8
-                              },
-                              "& strong": { fontWeight: 700 },
-                              "& em": { fontStyle: "italic" }
+                              "& a": {
+                                color: message.sender === "user" ? "rgba(255,255,255,0.9)" : "#007AFF",
+                                textDecoration: "underline",
+                                "&:hover": {
+                                  opacity: 0.8
+                                }
+                              }
                             }}
-                            dangerouslySetInnerHTML={{ __html: message.content }}
-                          />
+                          >
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                // Custom components for better styling
+                                h1: ({ children }) => (
+                                  <Typography variant="h4" component="h1" sx={{ 
+                                    fontSize: "1.4rem",
+                                    fontWeight: 700,
+                                    margin: "20px 0 12px 0",
+                                    color: message.sender === "user" ? "white" : "#1D1D1F",
+                                    borderBottom: message.sender === "user" ? "2px solid rgba(255,255,255,0.3)" : "2px solid rgba(0,122,255,0.3)",
+                                    paddingBottom: "8px"
+                                  }}>
+                                    {children}
+                                  </Typography>
+                                ),
+                                h2: ({ children }) => (
+                                  <Typography variant="h5" component="h2" sx={{ 
+                                    fontSize: "1.2rem",
+                                    fontWeight: 700,
+                                    margin: "18px 0 10px 0",
+                                    color: message.sender === "user" ? "rgba(255,255,255,0.95)" : "#007AFF"
+                                  }}>
+                                    {children}
+                                  </Typography>
+                                ),
+                                h3: ({ children }) => (
+                                  <Typography variant="h6" component="h3" sx={{ 
+                                    fontSize: "1.1rem",
+                                    fontWeight: 600,
+                                    margin: "16px 0 8px 0",
+                                    color: message.sender === "user" ? "rgba(255,255,255,0.9)" : "#5856D6"
+                                  }}>
+                                    {children}
+                                  </Typography>
+                                ),
+                                p: ({ children }) => (
+                                  <Typography variant="body2" sx={{ 
+                                    margin: "0 0 12px 0",
+                                    fontSize: "0.9rem",
+                                    lineHeight: 1.6,
+                                    color: message.sender === "user" ? "white" : "#1D1D1F"
+                                  }}>
+                                    {children}
+                                  </Typography>
+                                )
+                              }}
+                            >
+                              {message.content}
+                            </ReactMarkdown>
+                          </Box>
                         )}
                         
                         {/* AI Learning Indicators */}
